@@ -1,0 +1,32 @@
+{
+  "name": "accountdown-model",
+  "description": "a wrapper around accountdown that provides a few additional features",
+  "version": "1.0.0",
+  "repository": {
+    "url": "git://github.com/sethvincent/accountdown-model.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "node tests/index.js | tap-spec"
+  },
+  "dependencies": {
+    "cuid": "^1.2.5",
+    "extend": "^2.0.1",
+    "filter-object": "^1.1.2",
+    "is-email": "^0.1.1",
+    "is-my-json-valid": "^2.12.0",
+    "level-simple-indexes": "0.0.2",
+    "subleveldown": "^2.0.0"
+  },
+  "devDependencies": {
+    "accountdown": "^4.1.0",
+    "accountdown-basic": "^1.1.0",
+    "each-async": "^1.1.1",
+    "levelup": "^1.2.0",
+    "memdown": "^1.0.0",
+    "subleveldown": "^2.0.0",
+    "tap-spec": "^4.0.0",
+    "tape": "^4.0.0"
+  },
+  "license": "MIT"
+}
