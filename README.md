@@ -35,7 +35,7 @@ Additionally, you can specify properties that should be stored in the `value` ob
 An example:
 
 ```
-var accounts = require('accountdown-basic')(accountdown, { 
+var accounts = require('accountdown-model')(accountdown, { 
   db: db,
   properties: {
     username: { type: 'string' },
