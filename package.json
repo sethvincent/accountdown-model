@@ -19,8 +19,8 @@
     "subleveldown": "^2.0.0"
   },
   "devDependencies": {
-    "accountdown": "^4.1.0",
-    "accountdown-basic": "^1.1.0",
+    "accountdown": "https://github.com/LukeSwart/accountdown/tarball/33699cbb3dee02a675ff087f3c98e8115977263e",
+    "accountdown-basic": "https://github.com/LukeSwart/accountdown-basic/tarball/fc48149dc96a14d5a263c16c3c94aa7b8e740d48",
     "each-async": "^1.1.1",
     "levelup": "^1.2.0",
     "memdown": "^1.0.0",
