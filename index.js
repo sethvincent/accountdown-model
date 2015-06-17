@@ -216,7 +216,7 @@ AccountdownModel.prototype.changePassword = function (key, password, callback) {
     }
     data.login.basic[self._key] = key
     if (self.timestamps) data.updated = self.timestamp()
-    self.accountdown.updateLogins(key, data, function(err) {
+    self.accountdown.update(key, data, function(err) {
       if (err) return callback(err)
       callback(null, data.value)
     })
