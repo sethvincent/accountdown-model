@@ -7,6 +7,7 @@ var filterObject = require('filter-object')
 var sublevel = require('subleveldown')
 var isEmail = require('is-email')
 var extend = require('extend')
+var clone = require('clone')
 var cuid = require('cuid')
 
 module.exports = AccountdownModel
@@ -23,9 +24,9 @@ inherits(AccountdownModel, Emitter)
     basic: { key: 'string', password: 'string' } // ...(other login types)
   },
   value: {
-    username: 'string',
+    email: 'string',
     key: 'string',
-    // additional properties, like the key of a profile model, for example
+    // additional properties, like a username or the key of a profile model, for example
   }
 }
 
@@ -46,22 +47,23 @@ function AccountdownModel (accountdown, options) {
   if (this._key !== 'key') throw new Error('Must use `key` as accountdown-basic property key instead of username')
 
   var schema = filterObject(options, [
-    '*', '!modelName', '!timestamp', '!indexKeys', '!validateOptions', '!db'
+    '*', '!modelName', '!timestamp', '!indexKeys', '!validateOptions', '!db', '!login'
   ])
 
   this.modelName = options.modelName || 'accounts'
   this.timestamps = options.timestamps || true
   this.timestamp = options.timestamp || function () { return new Date(Date.now()).toISOString() }
   this.indexKeys = options.indexKeys || []
+  var required = options.required || []
 
-  var properties = extend({}, schema)
+  var properties = clone(schema)
   properties[this._key] = { type: 'string' }
 
   options.schema = {
     title: self.modelName,
     type: 'object',
     properties: properties,
-    required: options.required.concat(this._key)
+    required: required.concat(this._key)
   }
 
   this.validateOptions = options.validateOptions
@@ -137,15 +139,15 @@ AccountdownModel.prototype.create = function (key, data, callback) {
   }
 
   if (!key) key = cuid()
-  data.value[this._key] = data.login.basic[this._key] = key
+  data.login.basic[this._key] = data.value[this._key] = key
   data.value = extend(defaults(this.schema), data.value)
   data.value = this.beforeCreate(data.value)
 
   var validatedLogin = this.validateLogin(data)
-  if (!validatedLogin) return callback(new Error(JSON.stringify(this.validate.errors)))
+  if (!validatedLogin) return callback(new Error(JSON.stringify(this.validateLogin.errors)))
 
   var validatedValue = this.validateValue(data.value)
-  if (!validatedValue) return callback(new Error(JSON.stringify(this.validate.errors)))
+  if (!validatedValue) return callback(new Error(JSON.stringify(this.validateValue.errors)))
 
   if (this.timestamps) {
     data.value.created = this.timestamp()
@@ -180,7 +182,7 @@ AccountdownModel.prototype.update = function (key, data, callback) {
    model = self.beforeUpdate(model)
  
    var validated = self.validateValue(model)
-   if (!validated) return callback(new Error(JSON.stringify(self.validate.errors)))
+   if (!validated) return callback(new Error(JSON.stringify(self.validateValue.errors)))
 
    if (self.timestamps) model.updated = self.timestamp()
    self.indexer.updateIndexes(model, function () {

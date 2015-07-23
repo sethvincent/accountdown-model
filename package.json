@@ -1,7 +1,7 @@
 {
   "name": "accountdown-model",
   "description": "a wrapper around accountdown that provides a few additional features",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "repository": {
     "url": "git://github.com/sethvincent/accountdown-model.git"
   },
@@ -10,6 +10,7 @@
     "test": "node tests/index.js | tap-spec"
   },
   "dependencies": {
+    "clone": "^1.0.2",
     "cuid": "^1.2.5",
     "extend": "^2.0.1",
     "filter-object": "^1.1.2",
