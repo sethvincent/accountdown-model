@@ -209,19 +209,17 @@ AccountdownModel.prototype.changePassword = function (key, password, callback) {
   var self = this
   this.get(key, function (err, account) {
     if (err) return callback(err)
-    self.remove(key, function (err) {
-      var data = {
-        login: { basic: { password: password } },
-        value: account
-      }
-      
-      data.login.basic[self._key] = key
 
-      if (self.timestamps) data.updated = self.timestamp()
-      self.create(data, function (err) {
-        if (err) return callback(err)
-        callback(null, data.value)
-      })
+    // Only include the login plug-ins that we want to update.
+    // In this case, it is `accountdown-basic`.
+    var data = {
+      login: { basic: { password: password } },
+    }
+    data.login.basic[self._key] = key
+    if (self.timestamps) data.updated = self.timestamp()
+    self.accountdown.update(key, data, function(err) {
+      if (err) return callback(err)
+      callback(null, data.value)
     })
   })
 }
