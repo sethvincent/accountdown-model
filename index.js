@@ -1,6 +1,7 @@
 var Emitter = require('events').EventEmitter
 var inherits = require('util').inherits
 var validator = require('is-my-json-valid')
+var defaults = require('json-schema-defaults')
 var indexer = require('level-simple-indexes')
 var filterObject = require('filter-object')
 var sublevel = require('subleveldown')
@@ -44,7 +45,7 @@ function AccountdownModel (accountdown, options) {
   this._key = this.accountdown._logins['basic']._key
   if (this._key !== 'key') throw new Error('Must use `key` as accountdown-basic property key instead of username')
 
-  var schema = options.schema || filterObject(options, [
+  var schema = filterObject(options, [
     '*', '!modelName', '!timestamp', '!indexKeys', '!validateOptions', '!db'
   ])
 
@@ -53,16 +54,15 @@ function AccountdownModel (accountdown, options) {
   this.timestamp = options.timestamp || function () { return new Date(Date.now()).toISOString() }
   this.indexKeys = options.indexKeys || []
 
-  schema.properties = extend({}, schema.properties)
-  schema.properties[this._key] = { type: 'string' }
+  var properties = extend({}, schema)
+  properties[this._key] = { type: 'string' }
 
-  options.schema = extend({
+  options.schema = {
     title: self.modelName,
-    type: 'object'
-  }, schema)
-
-  options.schema.required = options.schema.required || []
-  options.schema.required.concat(this._key)
+    type: 'object',
+    properties: properties,
+    required: options.required.concat(this._key)
+  }
 
   this.validateOptions = options.validateOptions
   this.schema = options.schema
@@ -136,20 +136,16 @@ AccountdownModel.prototype.create = function (key, data, callback) {
     key = data.value[this._key] = data.login.basic[this._key]
   }
 
-  if (!key) var key = data.value[this._key] = data.login.basic[this._key] = cuid()
-  var validatedLogin = this.validateLogin(data)
+  if (!key) key = cuid()
+  data.value[this._key] = data.login.basic[this._key] = key
+  data.value = extend(defaults(this.schema), data.value)
+  data.value = this.beforeCreate(data.value)
 
-  if (!validatedLogin) {
-    // TODO: more useful error message
-    return callback(new Error(this.modelName + ' login object requires key and accountdown-basic'))
-  }
+  var validatedLogin = this.validateLogin(data)
+  if (!validatedLogin) return callback(new Error(JSON.stringify(this.validate.errors)))
 
   var validatedValue = this.validateValue(data.value)
-
-  if (!validatedValue) {
-    // TODO: more useful error message
-    return callback(new Error(this.modelName + ' object does not match schema'))
-  }
+  if (!validatedValue) return callback(new Error(JSON.stringify(this.validate.errors)))
 
   if (this.timestamps) {
     data.value.created = this.timestamp()
@@ -181,6 +177,11 @@ AccountdownModel.prototype.update = function (key, data, callback) {
  this.get(key, function (err, model) {
    if (err || !model) return callback(new Error(self.modelName + ' not found with ' + this._key + ' ' + key))
    model = extend(model, data)
+   model = self.beforeUpdate(model)
+ 
+   var validated = self.validateValue(model)
+   if (!validated) return callback(new Error(JSON.stringify(self.validate.errors)))
+
    if (self.timestamps) model.updated = self.timestamp()
    self.indexer.updateIndexes(model, function () {
      self.accountdown.put(key, model, function (err) {
@@ -254,4 +255,12 @@ AccountdownModel.prototype.findOneBy = function (index, options, callback) {
 
 AccountdownModel.prototype.isRegistered = function (type) {
   return !!this.accountdown._logins[type]
+}
+
+AccountdownModel.prototype.beforeCreate = function (data) {
+  return data
+}
+
+AccountdownModel.prototype.beforeUpdate = function (data) {
+  return data
 }
